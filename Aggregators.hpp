@@ -17,16 +17,14 @@ public:
         cnt_ += value;
     }
 
-    T getResult( bool should_reset = true)
+    T getResult() const
     {
-        T res = cnt_;
+        return cnt_;
+    }
 
-        if ( should_reset )
-        {
-            cnt_ = 0;
-        }
-
-        return res;
+    void reset()
+    {
+        cnt_ = T{0};
     }
 };
 
@@ -44,19 +42,19 @@ public:
         count_++;
     }
 
-    T getResult( bool should_reset = true)
+    T getResult() const
     {
         T res = count_ > 0
                 ? sum_ / count_
                 : T{0};
 
-        if ( should_reset )
-        {
-            count_ = 0;
-            sum_ = 0;
-        }
-
         return res;
+    }
+
+    void reset()
+    {
+        count_ = T{0};
+        sum_ = T{0};
     }
 };
 
@@ -72,7 +70,7 @@ public:
         samples_.push_back( value);
     }
 
-    T getResult( bool should_reset = true)
+    T getResult() const
     {
         if ( samples_.empty() )
         {
@@ -84,12 +82,12 @@ public:
         
         size_t mid = sorted.size() / 2;
 
-        T res = sorted[mid];
-        if ( should_reset )
-        {
-            samples_.clear();
-        }
-        return res;
+        return sorted[mid];
+    }
+
+    void reset()
+    {
+        samples_.clear();
     }
 };
 
@@ -104,16 +102,14 @@ public:
         if ( value > max_value_ ) max_value_ = value;
     }
 
-    T getResult( bool should_reset = true)
+    T getResult() const
     {
-        T res = max_value_;
+        return max_value_;
+    }
 
-        if ( should_reset )
-        {
-            max_value_ = std::numeric_limits<T>::lowest();
-        }
-
-        return res;
+    void reset()
+    {
+        max_value_ = std::numeric_limits<T>::lowest();
     }
 };
 
@@ -128,16 +124,14 @@ public:
         if ( value < min_value_ ) min_value_ = value;
     }
 
-    T getResult( bool should_reset = true)
+    T getResult() const
     {
-        T res = min_value_;
+        return min_value_;
+    }
 
-        if ( should_reset )
-        {
-            min_value_ = std::numeric_limits<T>::max();
-        }
-
-        return res;
+    void reset()
+    {
+        min_value_ = std::numeric_limits<T>::max();
     }
 };
 } // namespace Metrics::Aggregators

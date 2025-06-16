@@ -26,17 +26,16 @@ public:
 };
 
 template <typename Agg, typename T>
-concept AggConcept = requires(Agg agg, T value, bool should_reset)
+concept AggConcept = requires( Agg agg, T value)
 {
     // Must have void addSample(T value);
     { agg.addSample(value) } -> std::same_as<void>;
     
-    // Must have T getResult(bool should_reset);
+    // Must have T getResult();
     // should_reset is always TRUE for this implementation
-    requires requires
-    { 
-        { agg.getResult(should_reset) } -> std::same_as<T>;
-    };
+    { agg.getResult() } -> std::same_as<T>;
+
+    { agg.reset() } -> std::same_as<void>;
 };
 
 template <template <typename> class Aggregator, typename T>
@@ -75,7 +74,8 @@ public:
     std::string getValueAsString() override
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        T val = aggregator_.getResult( /*should_reset=*/true);
+        T val = aggregator_.getResult();
+        aggregator_.reset();
         return this->convertToString( val);
     }
 };
@@ -83,7 +83,7 @@ public:
 class MetricsCollector
 {
 private:
-    std::string getCurrentTimestamp()
+    std::string getCurrentTimestamp() const
     {
         auto now = std::chrono::system_clock::now();
         auto now_c = std::chrono::system_clock::to_time_t( now);
@@ -99,7 +99,7 @@ private:
     }
 
     std::vector<std::shared_ptr<MetricBase>> metrics_;
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
 
 public:
     template <template <typename> class Aggregator, typename T>
@@ -112,7 +112,7 @@ public:
         return metric;
     }
 
-    void writeToFile( const std::string &filename)
+    void writeToFile( const std::string &filename) const
     {
         std::ostringstream line;
         line << getCurrentTimestamp();
