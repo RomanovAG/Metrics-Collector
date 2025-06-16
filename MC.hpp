@@ -102,7 +102,6 @@ private:
     }
 
     std::vector<std::shared_ptr<MetricBase>> metrics_;
-    mutable std::mutex mutex_;
 
 public:
     template <template <typename> class Aggregator, typename T>
@@ -110,7 +109,6 @@ public:
     registerMetric( const std::string &name)
     {
         auto metric = std::make_shared<Metric<Aggregator, T>>( name);
-        std::lock_guard<std::mutex> lock( mutex_);
         metrics_.push_back( metric);
         return metric;
     }
@@ -119,13 +117,10 @@ public:
     {
         std::ostringstream line;
         line << this->getCurrentTimestamp();
+
+        for ( const auto &metric : metrics_ )
         {
-            std::lock_guard<std::mutex> lock( mutex_);
-        
-            for ( const auto &metric : metrics_ )
-            {
-                line << " \"" << metric->getName() << "\" " << metric->getValueAsString();
-            }
+            line << " \"" << metric->getName() << "\" " << metric->getValueAsString();
         }
 
         std::ofstream file( filename, std::ios::app);
