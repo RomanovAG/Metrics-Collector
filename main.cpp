@@ -68,7 +68,7 @@ int main( int argc, char **argv)
     {
         for ( int i = 0; i < 10000; ++i )
         {
-            http_metric->addSample( random() % 2);
+            http_metric->addSample( rand() % 2);
             //http_metric->addSample( i);
             std::this_thread::sleep_for( std::chrono::microseconds( 10));
         }
@@ -135,7 +135,7 @@ int main( int argc, char **argv)
     {
         for ( int i = 0; i < 525; ++i )
         {
-            cpu_metric->addSample( random() % 8);
+            cpu_metric->addSample( rand() % 8);
             std::this_thread::sleep_for( std::chrono::milliseconds( 10));
         }
     });
@@ -144,7 +144,7 @@ int main( int argc, char **argv)
     {
         for ( int i = 0; i < 1525; ++i )
         {
-            temp_metric->addSample( random() % 4 + 25.0f);
+            temp_metric->addSample( rand() % 4 + 25.0f);
             std::this_thread::sleep_for( std::chrono::milliseconds( 10));
         }
     });
