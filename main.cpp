@@ -6,6 +6,30 @@
 using namespace Metrics;
 using namespace Aggregators;
 
+// example of custom aggregator
+template<typename T>
+class CustomAggLast
+{
+private:
+    T last_ = T{0};
+public:
+    void addSample( T val)
+    {
+        last_ = val;
+    }
+
+    T getResult() const
+    {
+        return last_;
+    }
+
+    void reset()
+    {
+        last_ = T{0};
+    }
+};
+
+
 int main( int argc, char **argv)
 {
     // default
@@ -31,13 +55,14 @@ int main( int argc, char **argv)
     MetricsCollector collector;
     
     // Register some metrics
-    auto cpu_metric = collector.registerMetric<Average, double>("CPU");
-    auto http_metric = collector.registerMetric<Counter, long long>("HTTP requests RPS");
-    auto temp_metric = collector.registerMetric<Median, float>("Temperature");
-    auto loop_iterations = collector.registerMetric<Counter, int>("Loop iters");
+    auto cpu_metric = collector.registerMetric<Average, double>( "CPU");
+    auto http_metric = collector.registerMetric<Counter, long long>( "HTTP requests RPS");
+    auto temp_metric = collector.registerMetric<Median, float>( "Temperature");
+    auto loop_iterations = collector.registerMetric<Counter, int>( "Loop iters");
+
+    auto last_time = collector.registerMetric<CustomAggLast, std::string>( "Last timestamp");
 
     // Imitate some multithread system
-
 
     std::thread http_worker( [&http_metric]()
     {
@@ -117,29 +142,52 @@ int main( int argc, char **argv)
 
     std::thread temp_sensor( [&temp_metric]()
     {
-        temp_metric->addSample( 36.6f);
-        std::this_thread::sleep_for( std::chrono::seconds( 1));
-        temp_metric->addSample( 0.5f);
+        for ( int i = 0; i < 1525; ++i )
+        {
+            temp_metric->addSample( random() % 4 + 25.0f);
+            std::this_thread::sleep_for( std::chrono::milliseconds( 10));
+        }
+    });
+
+    std::thread timestamp_work( [&last_time]()
+    {
+        for ( int i = 0; i < 19; ++i )
+        {
+            auto now = std::chrono::system_clock::now();
+            auto now_c = std::chrono::system_clock::to_time_t( now);
+            std::tm now_tm = *std::localtime( &now_c);
+        
+            auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
+                now.time_since_epoch()) % 1000;
+
+            std::ostringstream oss;
+            oss << std::put_time( &now_tm, "%H:%M:%S")
+                << '.' << std::setfill( '0') << std::setw( 3) << milliseconds.count();
+            last_time->addSample( oss.str());
+            std::this_thread::sleep_for( std::chrono::milliseconds( 500));
+        }
     });
 
     for ( int i = 0; i < work_duration; ++i )
     {
+        // write to file every second
         std::this_thread::sleep_for( std::chrono::seconds(1));
         collector.writeToFile( log_file);
-        std::cout << "Written at " << i + 1 << " second(s)\n";
+        std::cout << "Written at " << i + 1 << " seconds\n";
     }
 
     http_worker.join();
+    loop_thread_1.join();
     loop_thread_2.join();
     loop_thread_3.join();
-    loop_thread_6.join();
     loop_thread_4.join();
-    loop_thread_8.join();
     loop_thread_5.join();
+    loop_thread_6.join();
     loop_thread_7.join();
-    loop_thread_1.join();
+    loop_thread_8.join();
     cpu_monitor.join();
     temp_sensor.join();
+    timestamp_work.join();
 
     return 0;
 }

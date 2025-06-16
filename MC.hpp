@@ -38,11 +38,12 @@ concept AggConcept = requires( Agg agg, T value)
     { agg.reset() } -> std::same_as<void>;
 };
 
+// Metric (can beused from multiple threads)
 template <template <typename> class Aggregator, typename T>
 requires AggConcept<Aggregator<T>, T>
 class Metric : public MetricBase
 {
-    static_assert( std::is_arithmetic_v<T>, "Type must be arithmetic" );
+//    static_assert( std::is_arithmetic_v<T>, "Type must be arithmetic" );
 private:
     std::string convertToString( T value) const
     {
@@ -71,6 +72,7 @@ public:
         aggregator_.addSample( value);
     }
 
+    // with reset
     std::string getValueAsString() override
     {
         T val;
@@ -83,6 +85,7 @@ public:
     }
 };
 
+// Metrics Collector (for single thread use only)
 class MetricsCollector
 {
 private:
@@ -104,6 +107,7 @@ private:
     std::vector<std::shared_ptr<MetricBase>> metrics_;
 
 public:
+    // sample: collector.registerMetric<SomeAggreagtor, int>( "name");
     template <template <typename> class Aggregator, typename T>
     std::shared_ptr<Metric<Aggregator, T>>
     registerMetric( const std::string &name)
