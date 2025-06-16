@@ -32,9 +32,9 @@ concept AggConcept = requires( Agg agg, T value)
     { agg.addSample(value) } -> std::same_as<void>;
     
     // Must have T getResult();
-    // should_reset is always TRUE for this implementation
     { agg.getResult() } -> std::same_as<T>;
 
+    // Must have void reset();
     { agg.reset() } -> std::same_as<void>;
 };
 
@@ -73,9 +73,12 @@ public:
 
     std::string getValueAsString() override
     {
-        std::lock_guard<std::mutex> lock(mutex_);
-        T val = aggregator_.getResult();
-        aggregator_.reset();
+        T val;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            val = aggregator_.getResult();
+            aggregator_.reset();
+        }
         return this->convertToString( val);
     }
 };
@@ -115,7 +118,7 @@ public:
     void writeToFile( const std::string &filename) const
     {
         std::ostringstream line;
-        line << getCurrentTimestamp();
+        line << this->getCurrentTimestamp();
         {
             std::lock_guard<std::mutex> lock( mutex_);
         
