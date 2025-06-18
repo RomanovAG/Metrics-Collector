@@ -36,19 +36,19 @@ int main( int argc, char **argv)
     std::string log_file = "metrics.log";
     int work_duration = 10/*iterations*/;
 
-    if (argc > 1)
+    if ( argc > 1 )
     {
         log_file = argv[1];
     }
-    if (argc > 2)
+    if ( argc > 2 )
     {
         try
         {
-            work_duration = std::stoi(argv[2]);
-        } catch (const std::exception& e)
+            work_duration = std::stoi( argv[2]);
+        } catch ( const std::exception &e )
         {
-            std::cerr << "Invalid interval argument: " << argv[2] 
-                      << ". Using default value of " << work_duration << " second(s).\n";
+            std::cerr << "Invalid argument: " << argv[2] 
+                      << ". Using default value of " << work_duration << " seconds.\n";
         }
     }
 
